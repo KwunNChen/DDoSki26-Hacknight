@@ -160,10 +160,10 @@
   }
 
   // Mount every module of one placement into `container`. Returns unmount fns + how many succeeded.
-  function mountAll(placement, container, reason) {
+  function mountAll(placement, container, reason, list = modulesFor(placement)) {
     const unmounts = [];
     let ok = 0;
-    for (const m of modulesFor(placement)) {
+    for (const m of list) {
       const root = el("div", { className: `proc-module proc-module-${m.name || "anon"}` });
       container.append(root);
       try {
@@ -178,6 +178,23 @@
     return { unmounts, ok };
   }
 
+  // Each trigger shows ONE fullscreen module, picked at random (video feed or snake: 50/50).
+  // If the pick fails to mount, the others are tried. `preferred` (a module name) forces the pick.
+  function mountOneFullscreen(container, preferred) {
+    const order = modulesFor("fullscreen");
+    for (let i = order.length - 1; i > 0; i--) { // Fisher-Yates shuffle
+      const j = Math.floor(Math.random() * (i + 1));
+      [order[i], order[j]] = [order[j], order[i]];
+    }
+    const want = order.findIndex((m) => m.name === preferred);
+    if (want > 0) order.unshift(order.splice(want, 1)[0]);
+    for (const m of order) {
+      const res = mountAll("fullscreen", container, "trigger", [m]);
+      if (res.ok) { log(`showing "${m.name}"`); return res; }
+    }
+    return { unmounts: [], ok: 0 };
+  }
+
   function runUnmounts(list) {
     for (const u of list) {
       try { u(); } catch (e) { console.error("[Procrastinator] unmount failed", e); }
@@ -187,7 +204,7 @@
   // ========================================================================
   // PHASE 1: full-screen overlay shell
   // ========================================================================
-  function showOverlay() {
+  function showOverlay(preferred) {
     if (overlay || document.getElementById("proc-host")) return; // double-mount guard
 
     const host = el("div", { id: "proc-host", className: "proc-host proc-fade-in" });
@@ -213,8 +230,8 @@
     const prevOverflow = document.documentElement.style.overflow;
     document.documentElement.style.overflow = "hidden";
 
-    // Fullscreen modules (reels). Fallback text if none loaded or all crashed.
-    const { unmounts, ok } = mountAll("fullscreen", stage, "trigger");
+    // One random fullscreen module (reels or snake). Fallback text if none loaded or all crashed.
+    const { unmounts, ok } = mountOneFullscreen(stage, preferred);
     if (!ok) {
       stage.append(el("div", { className: "proc-fallback" }, [
         el("h1", { textContent: "YOU SHOULD BE STUDYING" }),
@@ -465,8 +482,8 @@
   // ---------------------------------------------------------- debug hooks
   // Usable from DevTools console when the extension's context is selected.
   window.PROC.core = {
-    trigger: () => { clearTimeout(timer); cancelWarning(); showOverlay(); },
-    warn: () => startWarning(showOverlay),
+    trigger: (name) => { clearTimeout(timer); cancelWarning(); showOverlay(name); }, // name: "reels" | "snake"
+    warn: (name) => startWarning(() => showOverlay(name)),
     close: () => closeOverlay(),
     demo: () => { demoMode = true; schedule(DEMO_DELAY); },
     schedule

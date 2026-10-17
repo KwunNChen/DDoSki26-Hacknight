@@ -36,3 +36,10 @@ main.js injects zero-specificity `:where()` defaults, so any rule in overlay.css
 - `?standalone=1` runs the scripts without the extension (fake `chrome.*` from `dev/chrome-shim.js`)
 - Shift+P three times: 5-second trigger, banner at 2.5s (demo mode). Escape counts as a dismiss attempt.
 - First trigger is 45s, or 22.5s if the title or URL has assignment/due/exam/midterm/quiz/homework. Each dismissal multiplies the delay by 0.7, down to a minimum of 8s.
+
+## Brainrot Snake (Person A)
+- `content/modules/snake.js` is a normal fullscreen module (`name: "snake"`), listed in the manifest before `main.js`.
+- Each trigger mounts ONE fullscreen module, picked at random: video feed (reels) or snake, 50/50. If the pick fails to mount, the other is tried.
+- DevTools console (extension context): `PROC.core.trigger("snake")` or `PROC.core.trigger("reels")` forces one. `PROC.core.warn("snake")` shows the heads-up banner first.
+- Snake styles live inside the module (scoped under `.proc-snake`), so nothing in `overlay.css` is required. Person C can restyle `.proc-snake__*` if they want.
+- Controls: arrow keys, WASD or swipe. Space or Enter restarts after a game over. Walls wrap. The apples are brainrot characters (emoji plus name, no art assets).
