@@ -31,6 +31,8 @@
   let overlay = null; // { host, stage, btn, taunt, attempts, lastAttempt, unmounts, prevOverflow }
   let corner = null;  // { host, unmounts }
   let shiftPPresses = [];
+  let celebration = null;
+  let celebrationTimer = null;
   let warning = null; // { el, tick, done } while the heads-up banner is showing
 
   const log = (...a) => console.log("%c[Procrastinator]", "color:#f0f", ...a);
@@ -104,6 +106,40 @@
     setTimeout(() => t.remove(), ms);
   }
 
+  // Celebrate the same playful counter shown in the popup, at each 5-minute boundary.
+  function clearCelebration() {
+    clearTimeout(celebrationTimer);
+    celebrationTimer = null;
+    celebration?.remove();
+    celebration = null;
+  }
+
+  function celebrateMilestone(minutes) {
+    clearCelebration();
+    const host = el("div", { className: "proc-celebration" });
+    const message = el("div", {
+      className: "proc-milestone",
+      textContent: `You've avoided work for ${minutes} minutes!`
+    });
+    message.setAttribute("role", "status");
+    host.append(message);
+    if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      const colors = ["#c7ff6b", "#c3a7fa", "#ff85b7", "#ffffff", "#ffd56b"];
+      for (let i = 0; i < 40; i++) {
+        const piece = el("span", { className: "proc-confetti" });
+        piece.style.setProperty("--proc-x", `${Math.random() * 100}vw`);
+        piece.style.setProperty("--proc-drift", `${Math.random() * 160 - 80}px`);
+        piece.style.setProperty("--proc-delay", `${Math.random() * .5}s`);
+        piece.style.backgroundColor = colors[i % colors.length];
+        piece.setAttribute("aria-hidden", "true");
+        host.append(piece);
+      }
+    }
+    document.documentElement.append(host);
+    celebration = host;
+    celebrationTimer = setTimeout(clearCelebration, 4200);
+  }
+
   // ------------------------------------------------------- module mounting
   function modulesFor(placement) {
     return Object.values(window.PROC.modules).filter(
@@ -169,7 +205,11 @@
     // Positioning is functional (the dodge depends on it), so it lives inline.
     btn.style.cssText = "position:absolute;top:16px;right:16px;z-index:3;transition:left .22s ease,top .22s ease;";
 
-    host.append(stage, taunt, btn);
+    const news = el("aside", { className: "proc-news" }, [
+      el("strong", { textContent: "BREAKING:" }),
+      el("span", { textContent: "Your assignment is still there." })
+    ]);
+    host.append(stage, news, taunt, btn);
     document.documentElement.append(host);
 
     const prevOverflow = document.documentElement.style.overflow;
@@ -234,6 +274,9 @@
     const r = o.btn.getBoundingClientRect();
     const cx = e && e.clientX != null ? e.clientX : r.left + r.width / 2;
     const cy = e && e.clientY != null ? e.clientY : r.top + r.height / 2;
+    const closeLabel = o.attempts === 1 ? "Are you sure?" : "After everything we’ve watched?";
+    o.btn.textContent = closeLabel;
+    o.btn.setAttribute("aria-label", `${closeLabel} Close distraction`);
     dodge(o.btn, cx, cy);
 
     o.taunt.textContent = TAUNTS[o.attempts - 1] || "Nope.";
@@ -246,7 +289,6 @@
     setTimeout(() => o.host.classList.remove("proc-shake"), 600);
 
     if (o.attempts >= DODGES) {
-      o.btn.textContent = "✕ Close (fine)";
       o.btn.classList.add("proc-dismiss-tired");
     }
   }
@@ -402,16 +444,26 @@
   // ------------------------------------------------- popup on/off toggle
   if (alive()) {
     chrome.storage.onChanged.addListener((changes, area) => {
-      if (area !== "local" || !changes.enabled) return;
-      enabled = changes.enabled.newValue !== false;
-      if (enabled) {
-        schedule();
-      } else {
-        clearTimeout(timer);
-        timer = null;
-        cancelWarning();
-        closeOverlay({ counted: false });
-        closeCorner();
+      if (area !== "local") return;
+      if (changes.enabled) {
+        enabled = changes.enabled.newValue !== false;
+        if (enabled) {
+          schedule();
+        } else {
+          clearTimeout(timer);
+          timer = null;
+          clearCelebration();
+          cancelWarning();
+          closeOverlay({ counted: false });
+          closeCorner();
+        }
+      }
+      if (enabled && !document.hidden && changes.minutesPrevented) {
+        const before = Math.max(0, Number(changes.minutesPrevented.oldValue) || 0);
+        const after = Math.max(0, Number(changes.minutesPrevented.newValue) || 0);
+        if (Number.isFinite(after) && Math.floor(after / 5) > Math.floor(before / 5)) {
+          celebrateMilestone(Math.floor(after / 5) * 5);
+        }
       }
     });
   }
