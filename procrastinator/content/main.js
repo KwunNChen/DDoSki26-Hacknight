@@ -12,6 +12,8 @@
   const MIN_DELAY = 8000;
   const DECAY = 0.7;
   const DEMO_DELAY = 3000;
+  const WARN_MS = 4000;       // heads-up banner shown this long before the overlay
+  const DEMO_WARN_MS = 1500;  // shorter heads-up in demo mode
   const DODGES = 2; // button runs away this many times, then closes on the next attempt
   const KEYWORD_RE = /\b(assignments?|due|exams?|midterms?|finals?|quiz(?:zes)?|homework)\b/i;
   const TAUNTS = ["Nope.", "Nice try."];
@@ -29,6 +31,7 @@
   let overlay = null; // { host, stage, btn, taunt, attempts, lastAttempt, unmounts, prevOverflow }
   let corner = null;  // { host, unmounts }
   let shiftPPresses = [];
+  let warning = null; // { el, tick, done } while the heads-up banner is showing
 
   const log = (...a) => console.log("%c[Procrastinator]", "color:#f0f", ...a);
   const rand = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
@@ -81,6 +84,13 @@
       :where(#proc-host .proc-taunt){position:absolute;top:70px;right:20px;font:800 22px system-ui;
         color:#ff3b5c;opacity:0;transition:opacity .15s;pointer-events:none;z-index:3;}
       :where(#proc-host .proc-taunt.proc-show){opacity:1;}
+      :where(.proc-warning){position:fixed;top:20px;left:50%;transform:translateX(-50%);
+        z-index:2147483647;display:flex;align-items:center;gap:12px;max-width:min(92vw,460px);
+        background:#21182f;color:#e8d9ff;border:1px solid #c3a7fa88;border-radius:14px;
+        padding:12px 18px;font:600 14px/1.35 system-ui,sans-serif;box-shadow:0 10px 36px rgba(0,0,0,.45);}
+      :where(.proc-warning .proc-warning-count){display:grid;place-items:center;flex:none;
+        width:34px;height:34px;border-radius:50%;background:#c7ff6b;color:#233015;font-weight:800;}
+      :where(.proc-warning small){display:block;opacity:.7;font-weight:500;font-size:12px;}
       :where(.proc-toast){position:fixed;left:50%;bottom:24px;transform:translateX(-50%);
         z-index:2147483647;background:#111;color:#fff;padding:10px 16px;border-radius:10px;
         font:600 14px system-ui,sans-serif;box-shadow:0 6px 24px rgba(0,0,0,.35);}
@@ -283,12 +293,13 @@
 
   async function schedule(delayOverride) {
     const token = ++scheduleToken;
+    cancelWarning();
     clearTimeout(timer);
     timer = null;
     if (!enabled || overlay) return;
     const delay = delayOverride ?? (await computeDelay());
     if (token !== scheduleToken || !enabled || overlay) return; // a newer schedule() won
-    timer = setTimeout(fire, delay);
+    timer = setTimeout(fire, Math.max(0, delay - warnMs()));
     log(`next trigger in ${(delay / 1000).toFixed(1)}s${demoMode ? " (demo mode)" : ""}`);
   }
 
@@ -306,7 +317,39 @@
       return;
     }
     firstTrigger = false;
-    showOverlay();
+    startWarning(showOverlay);
+  }
+
+  // ------------------------------------------------------------------
+  // Heads-up banner: "Procrastination incoming" with a countdown, then the overlay.
+  // ------------------------------------------------------------------
+  const warnMs = () => (demoMode ? DEMO_WARN_MS : WARN_MS);
+
+  function startWarning(onDone) {
+    cancelWarning();
+    let left = Math.max(1, Math.round(warnMs() / 1000));
+    const count = el("span", { className: "proc-warning-count", textContent: String(left) });
+    const text = el("div", {}, [
+      el("div", { textContent: "⚠️ Productivity detected. Procrastination incoming." }),
+      el("small", { textContent: `Spotted on ${location.hostname || "this page"}. Brace yourself.` })
+    ]);
+    const banner = el("div", { className: "proc-warning", role: "alert" }, [count, text]);
+    document.documentElement.append(banner);
+    const tick = setInterval(() => {
+      left--;
+      if (left > 0) { count.textContent = String(left); return; }
+      cancelWarning();
+      if (enabled && !overlay) onDone();
+    }, warnMs() / Math.max(1, Math.round(warnMs() / 1000)));
+    warning = { el: banner, tick };
+    log(`heads-up shown on ${location.host}`);
+  }
+
+  function cancelWarning() {
+    if (!warning) return;
+    clearInterval(warning.tick);
+    warning.el.remove();
+    warning = null;
   }
 
   // ========================================================================
@@ -366,6 +409,7 @@
       } else {
         clearTimeout(timer);
         timer = null;
+        cancelWarning();
         closeOverlay({ counted: false });
         closeCorner();
       }
@@ -375,7 +419,8 @@
   // ---------------------------------------------------------- debug hooks
   // Usable from DevTools console when the extension's context is selected.
   window.PROC.core = {
-    trigger: () => { clearTimeout(timer); showOverlay(); },
+    trigger: () => { clearTimeout(timer); cancelWarning(); showOverlay(); },
+    warn: () => startWarning(showOverlay),
     close: () => closeOverlay(),
     demo: () => { demoMode = true; schedule(DEMO_DELAY); },
     schedule
