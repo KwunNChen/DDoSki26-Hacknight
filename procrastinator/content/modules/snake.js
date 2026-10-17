@@ -35,22 +35,22 @@
       color:#fff; font-family:system-ui,-apple-system,"Segoe UI",sans-serif; user-select:none; }
     .proc-snake__hud { display:flex; justify-content:space-between; align-items:center; gap:12px;
       width:min(480px,86vw,68vh); font-weight:800; letter-spacing:.04em; font-size:13px; }
-    .proc-snake__title { color:#c7ff6b; }
+    .proc-snake__title { color:#fff; }
     .proc-snake__score { color:#fff; font-variant-numeric:tabular-nums; }
     .proc-snake__ticker { min-height:20px; width:min(480px,86vw,68vh); text-align:center; font-size:13px;
-      font-weight:700; color:#c3a7fa; }
+      font-weight:700; color:#ccc; }
     .proc-snake__board { position:relative; width:min(480px,86vw,68vh); aspect-ratio:1; border-radius:18px;
-      overflow:hidden; border:2px solid #c3a7fa66; box-shadow:0 0 40px #c3a7fa33, 0 24px 80px #000a; background:#0b0814; }
+      overflow:hidden; border:2px solid #444; background:#111; }
     .proc-snake__canvas { display:block; width:100%; height:100%; touch-action:none; image-rendering:auto; }
     .proc-snake__screen { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center;
-      justify-content:center; gap:10px; text-align:center; padding:20px; background:#0b0814e6; }
+      justify-content:center; gap:10px; text-align:center; padding:20px; background:#111111ee; }
     .proc-snake__screen[hidden] { display:none; }
-    .proc-snake__big { margin:0; font-size:clamp(26px,6vw,40px); font-weight:900; line-height:1.05; color:#c7ff6b; }
-    .proc-snake__small { margin:0; font-size:13px; color:#d5c5eb; max-width:300px; line-height:1.45; }
-    .proc-snake__go { margin-top:6px; padding:11px 20px; border:0; border-radius:999px; background:#c7ff6b;
-      color:#233015; font:800 14px system-ui,sans-serif; cursor:pointer; }
+    .proc-snake__big { margin:0; font-size:clamp(26px,6vw,40px); font-weight:900; line-height:1.05; color:#fff; }
+    .proc-snake__small { margin:0; font-size:13px; color:#ccc; max-width:300px; line-height:1.45; }
+    .proc-snake__go { margin-top:6px; padding:11px 20px; border:0; border-radius:999px; background:#fff;
+      color:#111; font:800 14px system-ui,sans-serif; cursor:pointer; }
     .proc-snake__go:hover { filter:brightness(1.08); }
-    .proc-snake__foot { font-size:11px; color:#8d829c; }
+    .proc-snake__foot { font-size:11px; color:#888; }
   `;
 
   function el(tag, className, text) {
@@ -117,8 +117,6 @@
       // ---------------------------------------------------------- state
       let snake, dir, queue, apple, lastChar, eaten, stepMs, acc, started, dead;
       let popups = [];
-      let shake = 0;
-      let flash = 0;
       let best = 0;
       let last = performance.now();
       let raf = 0;
@@ -166,7 +164,6 @@
 
       function die() {
         dead = true;
-        shake = 0.5;
         best = Math.max(best, eaten);
         overTitle.textContent = pick(DEATH_LINES);
         overText.textContent = `You ate ${eaten} brainrot${eaten === 1 ? "" : "s"} for ${eaten * 100} aura. Best: ${best * 100}.`;
@@ -194,8 +191,6 @@
           x: head.x * CELL + CELL / 2, y: head.y * CELL, age: 0,
           text: eaten % 5 === 0 ? pick(COMBO_LINES) : "+100"
         });
-        shake = 0.22;
-        flash = 0.35;
         stepMs = Math.max(MIN_STEP_MS, stepMs - 4);
         spawnApple();
       }
@@ -213,14 +208,9 @@
 
       function draw(now, dt) {
         ctx.save();
-        if (shake > 0) ctx.translate((Math.random() - 0.5) * 8 * shake * 4, (Math.random() - 0.5) * 8 * shake * 4);
 
-        ctx.fillStyle = "#0b0814";
+        ctx.fillStyle = "#111";
         ctx.fillRect(-10, -10, SIZE + 20, SIZE + 20);
-        if (flash > 0) {
-          ctx.fillStyle = `hsla(${(now / 4) % 360},90%,60%,${flash * 0.35})`;
-          ctx.fillRect(0, 0, SIZE, SIZE);
-        }
         ctx.strokeStyle = "#ffffff0b";
         ctx.lineWidth = 1;
         for (let i = 1; i < COLS; i++) {
@@ -228,20 +218,16 @@
           ctx.beginPath(); ctx.moveTo(0, i * CELL); ctx.lineTo(SIZE, i * CELL); ctx.stroke();
         }
 
-        // Apple: bobbing emoji with a soft glow.
-        const bob = Math.sin(now / 180) * 2;
-        ctx.shadowColor = "#c3a7fa";
-        ctx.shadowBlur = 16;
+        // Apple: plain emoji.
         ctx.font = `${CELL - 2}px ${EMOJI_FONT}`;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.fillText(apple.char.emoji, apple.x * CELL + CELL / 2, apple.y * CELL + CELL / 2 + bob);
-        ctx.shadowBlur = 0;
+        ctx.fillText(apple.char.emoji, apple.x * CELL + CELL / 2, apple.y * CELL + CELL / 2);
 
         // Snake: rainbow body, moai head.
         for (let i = snake.length - 1; i >= 1; i--) {
           const s = snake[i];
-          ctx.fillStyle = `hsl(${(now / 12 + i * 14) % 360},85%,58%)`;
+          ctx.fillStyle = "#4caf50";
           roundRect(s.x * CELL + 2, s.y * CELL + 2, CELL - 4, CELL - 4, 7);
           ctx.fill();
         }
@@ -253,7 +239,7 @@
         ctx.font = `900 15px system-ui, sans-serif`;
         for (const p of popups) {
           const a = Math.max(0, 1 - p.age / 0.9);
-          ctx.fillStyle = `rgba(199,255,107,${a})`;
+          ctx.fillStyle = `rgba(255,255,255,${a})`;
           ctx.strokeStyle = `rgba(0,0,0,${a})`;
           ctx.lineWidth = 3;
           const py = p.y - p.age * 44;
@@ -262,8 +248,6 @@
         }
         ctx.restore();
 
-        shake = Math.max(0, shake - dt * 1.6);
-        flash = Math.max(0, flash - dt * 1.4);
         for (const p of popups) p.age += dt;
         popups = popups.filter((p) => p.age < 0.9);
       }
