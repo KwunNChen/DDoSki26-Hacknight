@@ -86,14 +86,15 @@
       :where(#proc-host .proc-taunt){position:absolute;top:70px;right:20px;font:800 22px system-ui;
         color:#ff3b5c;opacity:0;transition:opacity .15s;pointer-events:none;z-index:3;}
       :where(#proc-host .proc-taunt.proc-show){opacity:1;}
-      :where(.proc-warning){position:fixed;top:20px;left:50%;transform:translateX(-50%);
-        z-index:2147483647;display:flex;align-items:center;gap:12px;max-width:min(92vw,460px);
-        background:#21182f;color:#e8d9ff;border:1px solid #c3a7fa88;border-radius:14px;
-        padding:12px 18px;font:600 14px/1.35 system-ui,sans-serif;box-shadow:0 10px 36px rgba(0,0,0,.45);}
-      :where(.proc-warning small){display:block;opacity:.7;font-weight:500;font-size:12px;}
-      :where(.proc-toast){position:fixed;left:50%;bottom:24px;transform:translateX(-50%);
-        z-index:2147483647;background:#111;color:#fff;padding:10px 16px;border-radius:10px;
-        font:600 14px system-ui,sans-serif;box-shadow:0 6px 24px rgba(0,0,0,.35);}
+      :where(.proc-warning){position:fixed;top:24px;left:50%;transform:translateX(-50%);
+        z-index:2147483647;box-sizing:border-box;display:flex;align-items:center;gap:16px;width:max-content;max-width:min(94vw,860px);
+        background:#21182f;color:#f1e6ff;border:2px solid #c3a7fa;border-radius:20px;
+        padding:clamp(14px,2vw,22px) clamp(18px,3vw,34px);font:800 clamp(18px,2.6vw,26px)/1.3 system-ui,sans-serif;
+        box-shadow:0 16px 56px rgba(0,0,0,.6);}
+      :where(.proc-warning small){display:block;margin-top:4px;opacity:.8;font-weight:600;font-size:clamp(14px,1.9vw,18px);}
+      :where(.proc-toast){position:fixed;left:50%;bottom:32px;transform:translateX(-50%);
+        z-index:2147483647;box-sizing:border-box;max-width:94vw;background:#111;color:#fff;padding:clamp(12px,1.8vw,18px) clamp(18px,2.6vw,28px);
+        border-radius:16px;font:700 clamp(16px,2.2vw,22px)/1.3 system-ui,sans-serif;box-shadow:0 10px 36px rgba(0,0,0,.5);}
     `;
     (document.head || document.documentElement).append(el("style", { id: "proc-base-style", textContent: css }));
   }
