@@ -87,13 +87,6 @@ Each distraction is a module that registers itself on a shared global (`window.P
 - **Distractions:** YouTube Shorts feed, brainrot clicker, Procrastibot.
 - **UI and demo:** popup, overlay styling, icons.
 
-## Known limitations
-
-- Developed and tested on a local test page. It has **not been verified on every school site**, and a site's own security policy could block embedded videos.
-- The Shorts feed needs an internet connection.
-- The grace-period click count resets on a full page load.
-- Not published to the Chrome Web Store. Load it unpacked.
-
 ## Troubleshooting
 
 - **Nothing happens on a page:** reload the extension on `chrome://extensions`, then reload the tab. Open DevTools (F12) and look for `[Procrastinator] loaded on ...` in the Console. If it's missing, the extension isn't running on that page.
