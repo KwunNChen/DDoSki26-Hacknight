@@ -8,6 +8,56 @@
   // in the module API to replace this small demo feed with other Shorts IDs/URLs.
   const DEFAULT_SHORTS = [
     {
+      id: "Eemry3tRxEY",
+      creator: "LastMinit",
+      title: "Tung Tung Tung Sahur 😳 #shorts",
+    },
+    {
+      id: "_5Q2ypx66iQ",
+      creator: "Torajo Kids",
+      title: "Tung Tung Tung Sahur dancing #shorts",
+    },
+    {
+      id: "f36FrAUn-GU",
+      creator: "FASH",
+      title: "Story Tung Tung Tung Sahur (Animation) #brainrot",
+    },
+    {
+      id: "zDh90Tn37kI",
+      creator: "ZoharD19",
+      title: "Bombardiro Crocodilo 🔥💥 #shorts",
+    },
+    {
+      id: "loHchY6b55o",
+      creator: "Funny Short Creator",
+      title: "Brr Brr Patapim sings #shorts",
+    },
+    {
+      id: "iU5auRRwQtA",
+      creator: "MrStar Shorts",
+      title: "Brr Brr Patapim Catch #shorts",
+    },
+    {
+      id: "nhnQvKf7ewc",
+      creator: "Laughing Toons",
+      title: "Tralalero Tralala trend animation #shorts",
+    },
+    {
+      id: "4nJ7O6MaU0s",
+      creator: "Brainrot Stories",
+      title: "Bombombini Gusini backstory #shorts",
+    },
+    {
+      id: "UfbMRZfRuMo",
+      creator: "Team Lily",
+      title: "Chimpanzini Bananini in 2099 #shorts",
+    },
+    {
+      id: "1rd54nS_tLA",
+      creator: "TimeRealm",
+      title: "Italian Brainrot Memes: Before & After #shorts",
+    },
+    {
       id: "etNb2M2QBzI",
       creator: "Cute animals",
       title: "Funny animals #shorts",
@@ -25,6 +75,8 @@
   ];
   const VIDEO_ID_PATTERN = /^[\w-]{11}$/;
   const YOUTUBE_PLAYER_ORIGIN = "https://www.youtube.com";
+  const YOUTUBE_WIDGET_CHANNEL = "widget";
+  let playerSequence = 0;
   const REELS_STYLES = `
     .proc-module-reels {
       display: flex;
@@ -246,7 +298,13 @@
       .filter(Boolean)
       .slice(0, 20);
 
-    return shorts.length ? shorts : DEFAULT_SHORTS;
+    const feed = shorts.length ? shorts : DEFAULT_SHORTS.slice();
+    // Give every session a fresh feed order while keeping every selected Short.
+    for (let index = feed.length - 1; index > 0; index -= 1) {
+      const swapIndex = Math.floor(Math.random() * (index + 1));
+      [feed[index], feed[swapIndex]] = [feed[swapIndex], feed[index]];
+    }
+    return feed;
   }
 
   function embedUrl(short, origin, autoplay) {
@@ -261,16 +319,46 @@
     return url.href;
   }
 
-  function sendPlayerCommand(frame, command) {
+  function sendPlayerCommand(frame, command, args = []) {
     if (!frame.contentWindow || frame.dataset.started !== "true") return;
     try {
       frame.contentWindow.postMessage(
-        JSON.stringify({ event: "command", func: command, args: [] }),
+        JSON.stringify({
+          event: "command",
+          func: command,
+          args,
+          id: frame.id,
+          channel: YOUTUBE_WIDGET_CHANNEL,
+        }),
         YOUTUBE_PLAYER_ORIGIN,
       );
     } catch (_error) {
       // The embed remains playable with its own YouTube controls if postMessage fails.
     }
+  }
+
+  function listenForPlayerReady(frame, signal, attempt = 0) {
+    if (
+      !frame.contentWindow
+      || frame.dataset.started !== "true"
+      || frame.dataset.apiReady === "true"
+      || signal.aborted
+      || attempt >= 12
+    ) return;
+
+    try {
+      frame.contentWindow.postMessage(
+        JSON.stringify({
+          event: "listening",
+          id: frame.id,
+          channel: YOUTUBE_WIDGET_CHANNEL,
+        }),
+        YOUTUBE_PLAYER_ORIGIN,
+      );
+    } catch (_error) {
+      // Retry the handshake while the YouTube player initializes.
+    }
+    window.setTimeout(() => listenForPlayerReady(frame, signal, attempt + 1), 250);
   }
 
   function startShort(entry, origin) {
@@ -291,6 +379,7 @@
     frame.removeAttribute("src");
     delete frame.dataset.started;
     delete frame.dataset.loaded;
+    delete frame.dataset.apiReady;
   }
 
   function makeShortCard(short, index, total, signal, api, onPlayerLoad) {
@@ -299,6 +388,7 @@
     card.setAttribute("aria-label", `Short ${index + 1} of ${total}: ${short.title}`);
 
     const frame = makeElement("iframe", "proc-reels__player");
+    frame.id = `proc-reels-player-${++playerSequence}`;
     frame.title = `YouTube Short: ${short.title}`;
     frame.loading = index === 0 ? "eager" : "lazy";
     frame.allow = "autoplay; encrypted-media; picture-in-picture; web-share";
@@ -356,6 +446,7 @@
         if (frame.dataset.started !== "true") return;
         if (frame.dataset.loaded === "true") return;
         frame.dataset.loaded = "true";
+        listenForPlayerReady(frame, state.signal);
         if (state.activeFrame === frame) {
           window.setTimeout(() => {
             if (state.activeFrame === frame && !state.signal.aborted) {
@@ -383,6 +474,26 @@
       if (entry) entry.card.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
 
+    function advanceAfterPlaybackEnd(frame) {
+      const endedIndex = state.activeIndex;
+      if (
+        endedIndex < 0
+        || endedIndex >= entries.length - 1
+        || state.pendingAdvanceIndex === endedIndex
+      ) return;
+
+      state.pendingAdvanceIndex = endedIndex;
+      window.setTimeout(() => {
+        if (state.pendingAdvanceIndex === endedIndex) state.pendingAdvanceIndex = -1;
+        if (
+          state.signal.aborted
+          || state.activeIndex !== endedIndex
+          || state.activeFrame !== frame
+        ) return;
+        scrollTo(endedIndex + 1);
+      }, 180);
+    }
+
     previous.addEventListener("click", () => scrollTo(state.activeIndex - 1), {
       signal: state.signal,
     });
@@ -408,6 +519,7 @@
       if (index === state.activeIndex) return;
       state.activeIndex = index;
       state.activeFrame = entries[index]?.frame || null;
+      state.pendingAdvanceIndex = -1;
       if (state.counter) state.counter.textContent = `${index + 1} / ${entries.length}`;
       entries.forEach((entry, entryIndex) => {
         entry.card.toggleAttribute("data-active", entryIndex === index);
@@ -415,6 +527,44 @@
         else unloadShort(entry);
       });
     }
+
+    window.addEventListener(
+      "message",
+      (event) => {
+        const frame = state.activeFrame;
+        if (
+          event.origin !== YOUTUBE_PLAYER_ORIGIN
+          || !frame
+          || event.source !== frame.contentWindow
+          || frame.dataset.started !== "true"
+        ) return;
+
+        let message;
+        try {
+          message = typeof event.data === "string" ? JSON.parse(event.data) : null;
+        } catch (_error) {
+          return;
+        }
+        if (!message || (message.id && message.id !== frame.id)) return;
+
+        if (message.event === "onReady") {
+          frame.dataset.apiReady = "true";
+          sendPlayerCommand(frame, "addEventListener", ["onStateChange"]);
+          sendPlayerCommand(frame, "addEventListener", ["onError"]);
+          return;
+        }
+
+        if (message.event === "onError") {
+          advanceAfterPlaybackEnd(frame);
+          return;
+        }
+
+        if (message.event === "onStateChange" && Number(message.info) === 0) {
+          advanceAfterPlaybackEnd(frame);
+        }
+      },
+      { signal: state.signal },
+    );
 
     state.entries = entries;
     if (typeof IntersectionObserver === "function") {
