@@ -90,8 +90,6 @@
         z-index:2147483647;display:flex;align-items:center;gap:12px;max-width:min(92vw,460px);
         background:#21182f;color:#e8d9ff;border:1px solid #c3a7fa88;border-radius:14px;
         padding:12px 18px;font:600 14px/1.35 system-ui,sans-serif;box-shadow:0 10px 36px rgba(0,0,0,.45);}
-      :where(.proc-warning .proc-warning-count){display:grid;place-items:center;flex:none;
-        width:34px;height:34px;border-radius:50%;background:#c7ff6b;color:#233015;font-weight:800;}
       :where(.proc-warning small){display:block;opacity:.7;font-weight:500;font-size:12px;}
       :where(.proc-toast){position:fixed;left:50%;bottom:24px;transform:translateX(-50%);
         z-index:2147483647;background:#111;color:#fff;padding:10px 16px;border-radius:10px;
@@ -363,33 +361,29 @@
   }
 
   // ------------------------------------------------------------------
-  // Heads-up banner: "Procrastination incoming" with a countdown, then the overlay.
+  // Heads-up banner: "Procrastination incoming", shown for warnMs(), then the overlay.
   // ------------------------------------------------------------------
   const warnMs = () => (demoMode ? DEMO_WARN_MS : WARN_MS);
 
   function startWarning(onDone) {
     cancelWarning();
-    let left = Math.max(1, Math.round(warnMs() / 1000));
-    const count = el("span", { className: "proc-warning-count", textContent: String(left) });
     const text = el("div", {}, [
       el("div", { textContent: "⚠️ Productivity detected. Procrastination incoming." }),
       el("small", { textContent: `Spotted on ${location.hostname || "this page"}. Brace yourself.` })
     ]);
-    const banner = el("div", { className: "proc-warning", role: "alert" }, [count, text]);
+    const banner = el("div", { className: "proc-warning", role: "alert" }, [text]);
     document.documentElement.append(banner);
-    const tick = setInterval(() => {
-      left--;
-      if (left > 0) { count.textContent = String(left); return; }
+    const tick = setTimeout(() => {
       cancelWarning();
       if (enabled && !overlay) onDone();
-    }, warnMs() / Math.max(1, Math.round(warnMs() / 1000)));
+    }, warnMs());
     warning = { el: banner, tick };
     log(`heads-up shown on ${location.host}`);
   }
 
   function cancelWarning() {
     if (!warning) return;
-    clearInterval(warning.tick);
+    clearTimeout(warning.tick);
     warning.el.remove();
     warning = null;
   }
