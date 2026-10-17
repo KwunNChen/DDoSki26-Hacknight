@@ -13,6 +13,7 @@
   const DECAY = 0.7;
   const DEMO_DELAY = 5000;
   const WARN_MS = 4000;       // heads-up banner shown this long before the overlay
+  const GRACE_CLICKS = 10;    // page clicks you get after closing the overlay before the next popup is allowed
   const DEMO_WARN_MS = 2500;  // shorter heads-up in demo mode
   const DODGES = 2; // button runs away this many times, then closes on the next attempt
   const KEYWORD_RE = /\b(assignments?|due|exams?|midterms?|finals?|quiz(?:zes)?|homework)\b/i;
@@ -32,6 +33,8 @@
   let corner = null;  // { host, unmounts }
   let shiftPPresses = [];
   let warning = null; // { el, tick, done } while the heads-up banner is showing
+  let graceLeft = 0;      // clicks still owed before the next popup (set on every dismissal)
+  let pendingFire = false; // the timer elapsed while the grace period was still running
 
   const log = (...a) => console.log("%c[Procrastinator]", "color:#f0f", ...a);
   const rand = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
@@ -226,6 +229,8 @@
     document.documentElement.style.overflow = o.prevOverflow;
 
     if (counted) {
+      graceLeft = GRACE_CLICKS;
+      pendingFire = false;
       await bump({ dismissals: 1, minutesPrevented: rand(1, 4) });
       mountCorner("dismissed");
       log("overlay dismissed");
@@ -315,6 +320,7 @@
 
   async function schedule(delayOverride) {
     const token = ++scheduleToken;
+    pendingFire = false;
     cancelWarning();
     clearTimeout(timer);
     timer = null;
@@ -328,6 +334,11 @@
   function fire() {
     timer = null;
     if (!enabled || overlay) return;
+    if (graceLeft > 0 && !demoMode) { // grace period: wait for the remaining clicks, then fire
+      pendingFire = true;
+      log(`grace period: ${graceLeft} more click${graceLeft === 1 ? "" : "s"} before the next popup`);
+      return;
+    }
     if (document.hidden) {
       // Don't waste the joke on a background tab: fire shortly after the user comes back.
       const onVis = () => {
@@ -412,8 +423,23 @@
     if (shiftPPresses.length >= 3) {
       shiftPPresses = [];
       demoMode = true;
+      graceLeft = 0;
+      pendingFire = false;
       toast("🎬 Demo mode: procrastination in 5s");
       if (!overlay) schedule(DEMO_DELAY);
+    }
+  }, true);
+
+  // Grace period: count clicks on the host page. Clicks on our own UI (chatbot, banner) don't count.
+  document.addEventListener("click", (e) => {
+    if (graceLeft <= 0) return;
+    const t = e.target;
+    if (t && t.closest && t.closest("#proc-host, #proc-corner, .proc-warning, .proc-toast")) return;
+    graceLeft--;
+    if (graceLeft === 0 && pendingFire) {
+      pendingFire = false;
+      log("grace period over");
+      fire();
     }
   }, true);
 
@@ -428,6 +454,8 @@
         } else {
           clearTimeout(timer);
           timer = null;
+          graceLeft = 0;
+          pendingFire = false;
           cancelWarning();
           closeOverlay({ counted: false });
           closeCorner();
@@ -443,7 +471,8 @@
     trigger: (name) => { clearTimeout(timer); cancelWarning(); showOverlay(name); }, // name: "reels" | "snake"
     warn: (name) => startWarning(() => showOverlay(name)),
     close: () => closeOverlay(),
-    demo: () => { demoMode = true; schedule(DEMO_DELAY); },
+    demo: () => { demoMode = true; graceLeft = 0; schedule(DEMO_DELAY); },
+    grace: () => ({ graceLeft, pendingFire }),
     schedule
   };
 
