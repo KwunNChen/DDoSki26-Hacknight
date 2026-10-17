@@ -262,7 +262,7 @@
     window.setTimeout(() => listenForPlayerReady(frame, signal, attempt + 1), 250);
   }
 
-  function startShort(entry, origin) {
+  function startShort(entry, origin, soundEnabled = false) {
     const { frame } = entry;
     if (frame.dataset.started === "true") {
       sendPlayerCommand(frame, soundEnabled ? "unMute" : "mute");
@@ -375,6 +375,26 @@
     function scrollTo(index) {
       const entry = entries[Math.max(0, Math.min(entries.length - 1, index))];
       if (entry) entry.card.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+
+    // Restored from 89d646d (lost in the merge of main into person-b/youtube-shorts).
+    function stopAutoAdvance() {
+      window.clearTimeout(state.autoAdvanceTimer);
+      state.autoAdvanceTimer = null;
+      state.autoNextFill?.classList.remove("is-running");
+    }
+
+    function scheduleAutoAdvance(index = state.activeIndex) {
+      stopAutoAdvance();
+      if (state.activeTab !== "shorts" || index < 0 || entries.length < 2) return;
+      if (state.autoNextFill) {
+        void state.autoNextFill.offsetWidth;
+        state.autoNextFill.classList.add("is-running");
+      }
+      state.autoAdvanceTimer = window.setTimeout(() => {
+        if (state.signal.aborted || state.activeTab !== "shorts" || state.activeIndex !== index) return;
+        scrollTo((index + 1) % entries.length);
+      }, 10000);
     }
 
     function advanceAfterPlaybackEnd(frame) {
