@@ -1,0 +1,10 @@
+/* STUB (Person A placeholder). Replace with Person C's overlay.css on merge.
+   Hooks main.js provides: see INTEGRATION.md */
+#proc-host.proc-shake { animation: proc-shake 0.45s; }
+@keyframes proc-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-12px); }
+  40% { transform: translateX(12px); }
+  60% { transform: translateX(-8px); }
+  80% { transform: translateX(8px); }
+}

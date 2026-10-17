@@ -1,0 +1,34 @@
+{
+  "manifest_version": 3,
+  "name": "The Procrastinator",
+  "description": "The anti-Grammarly. Detects productivity and fixes it.",
+  "version": "0.1",
+  "permissions": ["storage"],
+  "background": { "service_worker": "background.js" },
+  "action": {
+    "default_title": "The Procrastinator",
+    "default_popup": "popup/popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.instructure.com/*",
+        "*://bcourses.berkeley.edu/*",
+        "*://*.gradescope.com/*",
+        "*://docs.google.com/*",
+        "http://localhost/*",
+        "http://127.0.0.1/*"
+      ],
+      "js": [
+        "content/modules/reels.js",
+        "content/modules/chatbot.js",
+        "content/main.js"
+      ],
+      "css": ["content/overlay.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    { "resources": ["assets/*"], "matches": ["<all_urls>"] }
+  ]
+}

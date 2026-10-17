@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- "Assignment" / "Midterm" in the title trips the keyword trigger (halves the first delay). -->
+  <title>Assignment 4: Midterm Review - CS 61A - Canvas</title>
+  <style>
+    body { margin: 0; font: 15px/1.5 system-ui, sans-serif; color: #2d3b45; background: #fff; }
+    .nav { position: fixed; inset: 0 auto 0 0; width: 84px; background: #394b58; }
+    .main { margin-left: 84px; padding: 24px 40px; max-width: 900px; }
+    .crumbs { color: #0770a3; font-size: 14px; }
+    h1 { font-weight: 400; margin: 12px 0; }
+    .meta { display: flex; gap: 32px; border-block: 1px solid #c7cdd1; padding: 10px 0; margin-bottom: 16px; }
+    .btn { background: #0770a3; color: #fff; border: 0; padding: 8px 14px; border-radius: 4px; font-size: 15px; }
+    .hint { margin-top: 40px; padding: 12px; background: #f5f5f5; border-radius: 6px; font-size: 13px; }
+    p { margin: 0 0 12px; }
+  </style>
+</head>
+<body>
+  <div class="nav"></div>
+  <div class="main">
+    <div class="crumbs">CS 61A &gt; Assignments &gt; Assignment 4</div>
+    <h1>Assignment 4: Midterm Review</h1>
+    <div class="meta">
+      <div><b>Due</b> Fri by 11:59pm</div>
+      <div><b>Points</b> 100</div>
+      <div><b>Submitting</b> a file upload</div>
+    </div>
+    <p>Complete problems 1 through 12 from the midterm review packet. Show all work.</p>
+    <p>Recursion, higher-order functions, and environment diagrams will be emphasized on the exam.</p>
+    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus lacinia odio vitae vestibulum.
+       Donec in efficitur leo. Nam vel urna sit amet nibh luctus pulvinar.</p>
+    <button class="btn">Start Assignment</button>
+
+    <div class="hint">
+      <b>Testing:</b> wait ~22s (keyword-halved first delay), or press <b>Shift+P</b> three times for a 3s trigger.
+      Without the extension installed, open <code>test.html?standalone=1</code> to run main.js via a fake chrome API.
+    </div>
+  </div>
+
+  <script>
+    // Standalone mode: load the content scripts directly with a fake chrome.* API.
+    if (new URLSearchParams(location.search).has("standalone")) {
+      const css = document.createElement("link");
+      css.rel = "stylesheet";
+      css.href = "content/overlay.css";
+      document.head.append(css);
+      ["dev/chrome-shim.js", "content/modules/reels.js", "content/modules/chatbot.js", "content/main.js"]
+        .forEach((src) => {
+          const s = document.createElement("script");
+          s.src = src;
+          s.async = false; // keep manifest order
+          document.body.append(s);
+        });
+    }
+  </script>
+</body>
+</html>
