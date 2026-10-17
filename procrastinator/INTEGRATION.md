@@ -27,6 +27,7 @@ Once C has `assets/icons/16.png`, `48.png` and `128.png`, Person A adds an `"ico
 | `#proc-host .proc-fallback` (h1, p) | shown when no reels module is loaded |
 | `#proc-corner` (`.proc-corner`) | fixed bottom-right box for the chatbot |
 | `.proc-toast` | small bottom-center toast (demo mode) |
+| `.proc-warning` (+ `.proc-warning-count`, `small`) | heads-up banner shown 4s (1.5s in demo mode) before each overlay, with a countdown number |
 
 main.js injects zero-specificity `:where()` defaults, so any rule in overlay.css wins over them.
 
