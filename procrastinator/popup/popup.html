@@ -1,14 +1,18 @@
 <!doctype html>
-<!-- STUB (Person A placeholder). Replace with Person C's popup on merge. -->
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <style>body{width:260px;font:14px system-ui;margin:12px}pre{background:#eee;padding:8px;border-radius:6px}</style>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>The Procrastinator</title><link rel="stylesheet" href="popup.css">
+  <script src="popup.js" defer></script>
 </head>
 <body>
-  <b>The Procrastinator (stub popup)</b>
-  <pre id="stats">loading...</pre>
-  <label><input type="checkbox" id="enabled"> enabled</label>
-  <script src="popup.js"></script>
-</body>
-</html>
+  <header><div class="brand-icon" aria-hidden="true">↗</div><div><h1>The Procrastinator</h1><p>Your potential. On pause.</p></div><label class="switch"><input id="enabled" type="checkbox" aria-label="Enable The Procrastinator" disabled><span></span></label></header>
+  <main>
+    <div class="status"><span id="status-dot"></span><span id="status-text">Connecting…</span><span class="edition">ANTI-GRAMMARLY</span></div>
+    <section class="hero" aria-labelledby="minutes-label"><div class="eyebrow" id="minutes-label">Productivity Prevented Today</div><div class="big-stat"><span id="minutes">0</span><span class="unit"> min</span></div><p>Tomorrow You can handle it.</p><span class="hero-star" aria-hidden="true">✳</span></section>
+    <section class="stats" aria-label="Distraction statistics"><div><strong id="triggers">0</strong><span>Triggers</span></div><div><strong id="dismissals">0</strong><span>Dismissals</span></div><div><strong id="conversations">0</strong><span>Conversations Had</span></div></section>
+    <section class="score-card"><div class="row"><h2>Procrastination Score</h2><span><strong id="score">0</strong><span class="muted"> / 100</span></span></div><div id="score-bar" class="progress" role="progressbar" aria-label="Procrastination Score" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="score-fill"></div></div><p id="score-caption">So much untapped distraction.</p></section>
+    <section class="achievement"><span aria-hidden="true">✦</span><div><div class="eyebrow">Achievement</div><p id="achievement">Your first distraction awaits.</p></div></section>
+    <p id="notice" class="notice" role="status" aria-live="polite"></p>
+  </main><footer>Built for later. <span>Much later. ↗</span></footer>
+</body></html>
