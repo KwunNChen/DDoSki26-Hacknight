@@ -27,12 +27,12 @@ Once C has `assets/icons/16.png`, `48.png` and `128.png`, Person A adds an `"ico
 | `#proc-host .proc-fallback` (h1, p) | shown when no reels module is loaded |
 | `#proc-corner` (`.proc-corner`) | fixed bottom-right box for the chatbot |
 | `.proc-toast` | small bottom-center toast (demo mode) |
-| `.proc-warning` (+ `small`) | heads-up banner shown 4s (1.5s in demo mode) before each overlay. No countdown number |
+| `.proc-warning` (+ `small`) | heads-up banner shown 4s (2.5s in demo mode) before each overlay. No countdown number |
 
 main.js injects zero-specificity `:where()` defaults, so any rule in overlay.css wins over them.
 
 ## Testing
 - `python -m http.server 8000` in this folder, then open `http://localhost:8000/test.html`
 - `?standalone=1` runs the scripts without the extension (fake `chrome.*` from `dev/chrome-shim.js`)
-- Shift+P three times: 3-second trigger (demo mode). Escape counts as a dismiss attempt.
+- Shift+P three times: 5-second trigger, banner at 2.5s (demo mode). Escape counts as a dismiss attempt.
 - First trigger is 45s, or 22.5s if the title or URL has assignment/due/exam/midterm/quiz/homework. Each dismissal multiplies the delay by 0.7, down to a minimum of 8s.

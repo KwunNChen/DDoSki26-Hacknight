@@ -11,9 +11,9 @@
   const BASE_DELAY = 45000;
   const MIN_DELAY = 8000;
   const DECAY = 0.7;
-  const DEMO_DELAY = 3000;
+  const DEMO_DELAY = 5000;
   const WARN_MS = 4000;       // heads-up banner shown this long before the overlay
-  const DEMO_WARN_MS = 1500;  // shorter heads-up in demo mode
+  const DEMO_WARN_MS = 2500;  // shorter heads-up in demo mode
   const DODGES = 2; // button runs away this many times, then closes on the next attempt
   const KEYWORD_RE = /\b(assignments?|due|exams?|midterms?|finals?|quiz(?:zes)?|homework)\b/i;
   const TAUNTS = ["Nope.", "Nice try."];
@@ -430,7 +430,7 @@
     if (shiftPPresses.length >= 3) {
       shiftPPresses = [];
       demoMode = true;
-      toast("🎬 Demo mode: procrastination in 3s");
+      toast("🎬 Demo mode: procrastination in 5s");
       if (!overlay) schedule(DEMO_DELAY);
     }
   }, true);
