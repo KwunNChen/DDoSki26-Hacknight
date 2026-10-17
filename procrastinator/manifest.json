@@ -22,6 +22,7 @@
       "js": [
         "content/modules/reels.js",
         "content/modules/chatbot.js",
+        "content/modules/snake.js",
         "content/main.js"
       ],
       "css": ["content/overlay.css"],

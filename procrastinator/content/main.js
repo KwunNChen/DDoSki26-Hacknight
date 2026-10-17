@@ -31,8 +31,6 @@
   let overlay = null; // { host, stage, btn, taunt, attempts, lastAttempt, unmounts, prevOverflow }
   let corner = null;  // { host, unmounts }
   let shiftPPresses = [];
-  let celebration = null;
-  let celebrationTimer = null;
   let warning = null; // { el, tick, done } while the heads-up banner is showing
 
   const log = (...a) => console.log("%c[Procrastinator]", "color:#f0f", ...a);
@@ -86,14 +84,15 @@
       :where(#proc-host .proc-taunt){position:absolute;top:70px;right:20px;font:800 22px system-ui;
         color:#ff3b5c;opacity:0;transition:opacity .15s;pointer-events:none;z-index:3;}
       :where(#proc-host .proc-taunt.proc-show){opacity:1;}
-      :where(.proc-warning){position:fixed;top:20px;left:50%;transform:translateX(-50%);
-        z-index:2147483647;display:flex;align-items:center;gap:12px;max-width:min(92vw,460px);
-        background:#21182f;color:#e8d9ff;border:1px solid #c3a7fa88;border-radius:14px;
-        padding:12px 18px;font:600 14px/1.35 system-ui,sans-serif;box-shadow:0 10px 36px rgba(0,0,0,.45);}
-      :where(.proc-warning small){display:block;opacity:.7;font-weight:500;font-size:12px;}
-      :where(.proc-toast){position:fixed;left:50%;bottom:24px;transform:translateX(-50%);
-        z-index:2147483647;background:#111;color:#fff;padding:10px 16px;border-radius:10px;
-        font:600 14px system-ui,sans-serif;box-shadow:0 6px 24px rgba(0,0,0,.35);}
+      :where(.proc-warning){position:fixed;top:24px;left:50%;transform:translateX(-50%);
+        z-index:2147483647;box-sizing:border-box;display:flex;align-items:center;gap:16px;width:max-content;max-width:min(94vw,860px);
+        background:#21182f;color:#f1e6ff;border:2px solid #c3a7fa;border-radius:20px;
+        padding:clamp(14px,2vw,22px) clamp(18px,3vw,34px);font:800 clamp(18px,2.6vw,26px)/1.3 system-ui,sans-serif;
+        box-shadow:0 16px 56px rgba(0,0,0,.6);}
+      :where(.proc-warning small){display:block;margin-top:4px;opacity:.8;font-weight:600;font-size:clamp(14px,1.9vw,18px);}
+      :where(.proc-toast){position:fixed;left:50%;bottom:32px;transform:translateX(-50%);
+        z-index:2147483647;box-sizing:border-box;max-width:94vw;background:#111;color:#fff;padding:clamp(12px,1.8vw,18px) clamp(18px,2.6vw,28px);
+        border-radius:16px;font:700 clamp(16px,2.2vw,22px)/1.3 system-ui,sans-serif;box-shadow:0 10px 36px rgba(0,0,0,.5);}
     `;
     (document.head || document.documentElement).append(el("style", { id: "proc-base-style", textContent: css }));
   }
@@ -102,40 +101,6 @@
     const t = el("div", { className: "proc-toast", textContent: text });
     document.documentElement.append(t);
     setTimeout(() => t.remove(), ms);
-  }
-
-  // Celebrate the same playful counter shown in the popup, at each 5-minute boundary.
-  function clearCelebration() {
-    clearTimeout(celebrationTimer);
-    celebrationTimer = null;
-    celebration?.remove();
-    celebration = null;
-  }
-
-  function celebrateMilestone(minutes) {
-    clearCelebration();
-    const host = el("div", { className: "proc-celebration" });
-    const message = el("div", {
-      className: "proc-milestone",
-      textContent: `You've avoided work for ${minutes} minutes!`
-    });
-    message.setAttribute("role", "status");
-    host.append(message);
-    if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      const colors = ["#c7ff6b", "#c3a7fa", "#ff85b7", "#ffffff", "#ffd56b"];
-      for (let i = 0; i < 40; i++) {
-        const piece = el("span", { className: "proc-confetti" });
-        piece.style.setProperty("--proc-x", `${Math.random() * 100}vw`);
-        piece.style.setProperty("--proc-drift", `${Math.random() * 160 - 80}px`);
-        piece.style.setProperty("--proc-delay", `${Math.random() * .5}s`);
-        piece.style.backgroundColor = colors[i % colors.length];
-        piece.setAttribute("aria-hidden", "true");
-        host.append(piece);
-      }
-    }
-    document.documentElement.append(host);
-    celebration = host;
-    celebrationTimer = setTimeout(clearCelebration, 4200);
   }
 
   // ------------------------------------------------------- module mounting
@@ -160,10 +125,10 @@
   }
 
   // Mount every module of one placement into `container`. Returns unmount fns + how many succeeded.
-  function mountAll(placement, container, reason) {
+  function mountAll(placement, container, reason, list = modulesFor(placement)) {
     const unmounts = [];
     let ok = 0;
-    for (const m of modulesFor(placement)) {
+    for (const m of list) {
       const root = el("div", { className: `proc-module proc-module-${m.name || "anon"}` });
       container.append(root);
       try {
@@ -178,6 +143,23 @@
     return { unmounts, ok };
   }
 
+  // Each trigger shows ONE fullscreen module, picked at random (video feed or snake: 50/50).
+  // If the pick fails to mount, the others are tried. `preferred` (a module name) forces the pick.
+  function mountOneFullscreen(container, preferred) {
+    const order = modulesFor("fullscreen");
+    for (let i = order.length - 1; i > 0; i--) { // Fisher-Yates shuffle
+      const j = Math.floor(Math.random() * (i + 1));
+      [order[i], order[j]] = [order[j], order[i]];
+    }
+    const want = order.findIndex((m) => m.name === preferred);
+    if (want > 0) order.unshift(order.splice(want, 1)[0]);
+    for (const m of order) {
+      const res = mountAll("fullscreen", container, "trigger", [m]);
+      if (res.ok) { log(`showing "${m.name}"`); return res; }
+    }
+    return { unmounts: [], ok: 0 };
+  }
+
   function runUnmounts(list) {
     for (const u of list) {
       try { u(); } catch (e) { console.error("[Procrastinator] unmount failed", e); }
@@ -187,7 +169,7 @@
   // ========================================================================
   // PHASE 1: full-screen overlay shell
   // ========================================================================
-  function showOverlay() {
+  function showOverlay(preferred) {
     if (overlay || document.getElementById("proc-host")) return; // double-mount guard
 
     const host = el("div", { id: "proc-host", className: "proc-host proc-fade-in" });
@@ -213,8 +195,8 @@
     const prevOverflow = document.documentElement.style.overflow;
     document.documentElement.style.overflow = "hidden";
 
-    // Fullscreen modules (reels). Fallback text if none loaded or all crashed.
-    const { unmounts, ok } = mountAll("fullscreen", stage, "trigger");
+    // One random fullscreen module (reels or snake). Fallback text if none loaded or all crashed.
+    const { unmounts, ok } = mountOneFullscreen(stage, preferred);
     if (!ok) {
       stage.append(el("div", { className: "proc-fallback" }, [
         el("h1", { textContent: "YOU SHOULD BE STUDYING" }),
@@ -446,27 +428,20 @@
         } else {
           clearTimeout(timer);
           timer = null;
-          clearCelebration();
           cancelWarning();
           closeOverlay({ counted: false });
           closeCorner();
         }
       }
-      if (enabled && !document.hidden && changes.minutesPrevented) {
-        const before = Math.max(0, Number(changes.minutesPrevented.oldValue) || 0);
-        const after = Math.max(0, Number(changes.minutesPrevented.newValue) || 0);
-        if (Number.isFinite(after) && Math.floor(after / 5) > Math.floor(before / 5)) {
-          celebrateMilestone(Math.floor(after / 5) * 5);
-        }
-      }
+
     });
   }
 
   // ---------------------------------------------------------- debug hooks
   // Usable from DevTools console when the extension's context is selected.
   window.PROC.core = {
-    trigger: () => { clearTimeout(timer); cancelWarning(); showOverlay(); },
-    warn: () => startWarning(showOverlay),
+    trigger: (name) => { clearTimeout(timer); cancelWarning(); showOverlay(name); }, // name: "reels" | "snake"
+    warn: (name) => startWarning(() => showOverlay(name)),
     close: () => closeOverlay(),
     demo: () => { demoMode = true; schedule(DEMO_DELAY); },
     schedule
