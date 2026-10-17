@@ -11,61 +11,51 @@
       id: "Eemry3tRxEY",
       creator: "LastMinit",
       title: "Tung Tung Tung Sahur 😳 #shorts",
-      durationSeconds: 17,
     },
     {
       id: "_5Q2ypx66iQ",
       creator: "Torajo Kids",
       title: "Tung Tung Tung Sahur dancing #shorts",
-      durationSeconds: 4,
     },
     {
-      id: "e4vRaw2Tb-U",
-      creator: "Thakur Animation",
-      title: "Tung Tung Tung Sahur in Neighborhood😅 #shorts",
-      durationSeconds: 12,
+      id: "f36FrAUn-GU",
+      creator: "FASH",
+      title: "Story Tung Tung Tung Sahur (Animation) #brainrot",
     },
     {
       id: "zDh90Tn37kI",
       creator: "ZoharD19",
       title: "Bombardiro Crocodilo 🔥💥 #shorts",
-      durationSeconds: 20,
     },
     {
       id: "loHchY6b55o",
       creator: "Funny Short Creator",
       title: "Brr Brr Patapim sings #shorts",
-      durationSeconds: 57,
     },
     {
-      id: "L2S3vcXN384",
-      creator: "drkplayzz",
-      title: "Tung Tung Sahur Dropped His Ice-cream",
-      durationSeconds: 10,
+      id: "iU5auRRwQtA",
+      creator: "MrStar Shorts",
+      title: "Brr Brr Patapim Catch #shorts",
     },
     {
-      id: "q7iTmLKdBGU",
-      creator: "Brainrot Stories",
-      title: "Chimpanzini Bananini Backstory Explained",
-      durationSeconds: 24,
+      id: "nhnQvKf7ewc",
+      creator: "Laughing Toons",
+      title: "Tralalero Tralala trend animation #shorts",
     },
     {
       id: "4nJ7O6MaU0s",
       creator: "Brainrot Stories",
       title: "Bombombini Gusini backstory #shorts",
-      durationSeconds: 29,
     },
     {
       id: "UfbMRZfRuMo",
       creator: "Team Lily",
       title: "Chimpanzini Bananini in 2099 #shorts",
-      durationSeconds: 44,
     },
     {
       id: "1rd54nS_tLA",
       creator: "TimeRealm",
       title: "Italian Brainrot Memes: Before & After #shorts",
-      durationSeconds: 20,
     },
     {
       id: "etNb2M2QBzI",
@@ -272,7 +262,7 @@
     window.setTimeout(() => listenForPlayerReady(frame, signal, attempt + 1), 250);
   }
 
-  function startShort(entry, origin, soundEnabled) {
+  function startShort(entry, origin) {
     const { frame } = entry;
     if (frame.dataset.started === "true") {
       sendPlayerCommand(frame, soundEnabled ? "unMute" : "mute");
@@ -387,38 +377,27 @@
       if (entry) entry.card.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
 
-    function stopAutoAdvance() {
-      window.clearTimeout(state.autoAdvanceTimer);
-      state.autoAdvanceTimer = null;
-      state.autoNextFill?.classList.remove("is-running");
-    }
+    function advanceAfterPlaybackEnd(frame) {
+      const endedIndex = state.activeIndex;
+      if (
+        endedIndex < 0
+        || endedIndex >= entries.length - 1
+        || state.pendingAdvanceIndex === endedIndex
+      ) return;
 
-    function scheduleAutoAdvance(index = state.activeIndex) {
-      stopAutoAdvance();
-      if (state.activeTab !== "shorts" || index < 0 || entries.length < 2) return;
-      if (state.autoNextFill) {
-        void state.autoNextFill.offsetWidth;
-        state.autoNextFill.classList.add("is-running");
-      }
-      state.autoAdvanceTimer = window.setTimeout(() => {
-        if (state.signal.aborted || state.activeTab !== "shorts" || state.activeIndex !== index) return;
-        scrollTo((index + 1) % entries.length);
-      }, 10000);
-    }
-
-    function advanceAfterPlayerError(frame) {
-      const failedIndex = state.activeIndex;
-      if (failedIndex < 0 || state.pendingAdvanceIndex === failedIndex) return;
-      state.pendingAdvanceIndex = failedIndex;
-      stopAutoAdvance();
+      state.pendingAdvanceIndex = endedIndex;
       window.setTimeout(() => {
-        if (state.pendingAdvanceIndex === failedIndex) state.pendingAdvanceIndex = -1;
-        if (state.signal.aborted || state.activeIndex !== failedIndex || state.activeFrame !== frame) return;
-        scrollTo((failedIndex + 1) % entries.length);
-      }, 250);
+        if (state.pendingAdvanceIndex === endedIndex) state.pendingAdvanceIndex = -1;
+        if (
+          state.signal.aborted
+          || state.activeIndex !== endedIndex
+          || state.activeFrame !== frame
+        ) return;
+        scrollTo(endedIndex + 1);
+      }, 180);
     }
 
-    previous.addEventListener("click", () => scrollTo((state.activeIndex - 1 + entries.length) % entries.length), {
+    previous.addEventListener("click", () => scrollTo(state.activeIndex - 1), {
       signal: state.signal,
     });
     next.addEventListener("click", () => scrollTo((state.activeIndex + 1) % entries.length), {
@@ -444,6 +423,7 @@
       state.activeIndex = index;
       state.activeFrame = entries[index]?.frame || null;
       state.pendingAdvanceIndex = -1;
+      if (state.counter) state.counter.textContent = `${index + 1} / ${entries.length}`;
       entries.forEach((entry, entryIndex) => {
         entry.card.toggleAttribute("data-active", entryIndex === index);
         if (entryIndex === index) startShort(entry, origin, state.soundEnabled);
@@ -475,13 +455,16 @@
           frame.dataset.apiReady = "true";
           sendPlayerCommand(frame, "addEventListener", ["onStateChange"]);
           sendPlayerCommand(frame, "addEventListener", ["onError"]);
-          sendPlayerCommand(frame, state.soundEnabled ? "unMute" : "mute");
-          if (state.soundEnabled) sendPlayerCommand(frame, "setVolume", [100]);
           return;
         }
 
         if (message.event === "onError") {
-          advanceAfterPlayerError(frame);
+          advanceAfterPlaybackEnd(frame);
+          return;
+        }
+
+        if (message.event === "onStateChange" && Number(message.info) === 0) {
+          advanceAfterPlaybackEnd(frame);
         }
       },
       { signal: state.signal },

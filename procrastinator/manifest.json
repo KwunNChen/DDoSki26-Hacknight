@@ -15,6 +15,7 @@
         "*://*.instructure.com/*",
         "*://bcourses.berkeley.edu/*",
         "*://*.gradescope.com/*",
+        "*://*.pensive.com/*",
         "*://docs.google.com/*",
         "http://localhost/*",
         "http://127.0.0.1/*"
