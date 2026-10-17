@@ -1,10 +1,56 @@
-/* STUB (Person A placeholder). Replace with Person C's overlay.css on merge.
-   Hooks main.js provides: see INTEGRATION.md */
-#proc-host.proc-shake { animation: proc-shake 0.45s; }
-@keyframes proc-shake {
-  0%, 100% { transform: translateX(0); }
-  20% { transform: translateX(-12px); }
-  40% { transform: translateX(12px); }
-  60% { transform: translateX(-8px); }
-  80% { transform: translateX(8px); }
-}
+/* Person C: styles for the markup supplied by the core and distraction modules. */
+#proc-host{display:flex;align-items:center;justify-content:center;isolation:isolate;background:rgba(8,7,12,.95);backdrop-filter:blur(12px);color:#f8f6ff;font:14px/1.5 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;animation:proc-fade-in .25s ease-out}
+:is(#proc-host,#proc-corner) *, :is(#proc-host,#proc-corner) *::before, :is(#proc-host,#proc-corner) *::after{box-sizing:border-box}
+:is(#proc-host,#proc-corner) button,:is(#proc-host,#proc-corner) input{font:inherit}
+:is(#proc-host,#proc-corner) button{cursor:pointer}
+:is(#proc-host,#proc-corner) button:focus-visible,:is(#proc-host,#proc-corner) input:focus-visible,:is(#proc-host,#proc-corner) [tabindex]:focus-visible{outline:3px solid #c7ff6b;outline-offset:3px}
+:is(#proc-host,#proc-corner) [hidden]{display:none!important}
+#proc-host .proc-stage{display:flex;align-items:center;justify-content:center;width:100%;height:100%;min-height:0;padding:24px}
+#proc-host .proc-dismiss{border:1px solid #ffffff30;border-radius:999px;background:#24212d;color:#fff;padding:10px 18px;min-height:44px;box-shadow:0 8px 24px #0005;font-weight:700}
+#proc-host .proc-dismiss-tired{background:#c7ff6b;color:#233015}
+/* The engine owns the dismiss button's position and coordinates. */
+#proc-host.proc-shake .proc-stage{animation:proc-shake .45s ease-in-out}
+#proc-host .proc-taunt{color:#c3a7fa;font-size:22px;font-weight:800;text-shadow:0 2px 10px #000;opacity:0;transition:opacity .15s;pointer-events:none}
+#proc-host .proc-taunt.proc-show{opacity:1}
+#proc-host .proc-fallback{text-align:center;padding:24px}
+#proc-host .proc-fallback h1{font-size:clamp(30px,7vw,80px);line-height:1.1;font-weight:900;color:#c3a7fa;margin:0 0 16px}
+#proc-host .proc-fallback p{color:#bbb2ca;font-size:18px;margin:0}
+#proc-host .proc-module-reels{height:100%;width:min(420px,100%);min-height:0}
+#proc-host .proc-reels__shell{position:relative;display:flex;flex-direction:column;height:100%;width:100%;overflow:hidden;border:1px solid #ffffff25;border-radius:24px;background:#100d17;box-shadow:0 30px 100px #0009}
+#proc-host .proc-reels__topbar{flex-shrink:0;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:18px 16px;background:#19151f;border-bottom:1px solid #ffffff15}
+#proc-host .proc-reels__brand{margin:0;font-size:15px;font-weight:800;letter-spacing:-.5px;color:#c3a7fa}
+#proc-host .proc-reels__tabs{display:flex;gap:12px;font-size:11px;color:#8d829c}
+#proc-host .proc-reels__tab--active{color:#fff;font-weight:700;text-decoration:underline;text-decoration-color:#c7ff6b;text-underline-offset:7px}
+#proc-host .proc-reels__feed{flex:1;min-height:0;overflow-y:auto;scroll-snap-type:y mandatory;overscroll-behavior:contain;scrollbar-width:none}
+#proc-host .proc-reels__feed::-webkit-scrollbar{display:none}
+#proc-host .proc-reels__card{position:relative;height:100%;width:100%;scroll-snap-align:start;scroll-snap-stop:always;background:#100d17}
+#proc-host .proc-reels__video{display:block;width:100%;height:100%;object-fit:cover}
+#proc-host .proc-reels__iframe{display:block;width:100%;flex:1;min-height:0;border:0;background:#100d17}
+#proc-host .proc-reels__caption{position:absolute;inset:auto 0 0;padding:60px 20px 24px;background:linear-gradient(transparent,#08050de6);pointer-events:none}
+#proc-host .proc-reels__creator{margin:0 0 8px;font-size:15px;font-weight:700;color:#fff}
+#proc-host .proc-reels__description{margin:0 0 8px;color:#f1ecf8;font-size:13px}
+#proc-host .proc-reels__audio{margin:0;color:#d5c5eb;font-size:11px}
+#proc-host .proc-reels__load-message{position:absolute;inset:30% 20px auto;text-align:center;color:#c3a7fa;padding:18px;background:#21192f;border-radius:12px}
+#proc-corner{width:min(360px,calc(100vw - 32px));max-height:calc(100dvh - 32px);color:#f8f6ff;font:14px/1.5 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;animation:proc-fade-in .25s ease-out}
+#proc-corner .proc-chatbot__panel{display:flex;flex-direction:column;max-height:min(560px,calc(100dvh - 32px));overflow:hidden;background:#19161f;border:1px solid #ffffff20;border-radius:20px;box-shadow:0 16px 64px #0006}
+#proc-corner .proc-chatbot__header{display:flex;align-items:center;gap:10px;padding:16px;background:#24202d;border-bottom:1px solid #ffffff10;flex-shrink:0}
+#proc-corner .proc-chatbot__avatar{display:grid;place-items:center;width:36px;height:36px;flex-shrink:0;border-radius:12px;background:#c3a7fa;color:#291840;font-weight:800;font-size:20px}
+#proc-corner .proc-chatbot__title{margin:0;font-size:14px;font-weight:700}
+#proc-corner .proc-chatbot__status{margin:2px 0 0;color:#aaa0ba;font-size:10px}
+#proc-corner .proc-chatbot__status::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:#c7ff6b;margin-right:5px;box-shadow:0 0 8px #c7ff6b44}
+#proc-corner .proc-chatbot__messages{display:flex;flex-direction:column;gap:10px;overflow-y:auto;min-height:80px;padding:16px;overscroll-behavior:contain}
+#proc-corner .proc-chatbot__message{margin:0;max-width:88%;padding:10px 13px;border-radius:14px 14px 14px 4px;background:#30283c;color:#f2eafa;overflow-wrap:anywhere;font-size:13px}
+#proc-corner .proc-chatbot__message--user{align-self:flex-end;border-radius:14px 14px 4px 14px;background:#c3a7fa;color:#271735}
+#proc-corner .proc-chatbot__typing{margin:0;padding:0 16px 10px;color:#aaa0ba;font-size:11px}
+#proc-corner .proc-chatbot__quick-replies{display:flex;flex-wrap:wrap;gap:6px;padding:4px 16px 12px;flex-shrink:0}
+#proc-corner .proc-chatbot__chip{border:1px solid #bba0ea55;background:#c3a7fa0c;color:#dfcef9;border-radius:999px;padding:8px 11px;font-size:11px}
+#proc-corner .proc-chatbot__chip:hover{background:#c3a7fa22}
+#proc-corner .proc-chatbot__composer{display:flex;gap:8px;border-top:1px solid #ffffff10;padding:12px;flex-shrink:0}
+#proc-corner .proc-chatbot__input{min-width:0;flex:1;border:1px solid #ffffff18;background:#100e16;color:#fff;border-radius:10px;padding:10px;font-size:12px}
+#proc-corner .proc-chatbot__send{border:0;border-radius:10px;background:#c7ff6b;color:#233015;padding:10px 14px;font-weight:700;font-size:12px}
+#proc-corner button:disabled,#proc-corner input:disabled{opacity:.5;cursor:default}
+.proc-toast{background:#21182f;color:#e8d9ff;border:1px solid #c3a7fa55;border-radius:12px}
+@keyframes proc-fade-in{from{opacity:0}to{opacity:1}}
+@keyframes proc-shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-10px)}40%{transform:translateX(10px)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}
+@media(max-width:480px){#proc-host .proc-stage{padding:0}#proc-host .proc-module-reels{width:100%}#proc-host .proc-reels__shell{border:0;border-radius:0}#proc-host .proc-reels__topbar{padding-right:150px;flex-wrap:wrap}}
+@media(prefers-reduced-motion:reduce){#proc-host,#proc-corner,:is(#proc-host,#proc-corner) *{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
