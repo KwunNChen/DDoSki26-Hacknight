@@ -31,8 +31,6 @@
   let overlay = null; // { host, stage, btn, taunt, attempts, lastAttempt, unmounts, prevOverflow }
   let corner = null;  // { host, unmounts }
   let shiftPPresses = [];
-  let celebration = null;
-  let celebrationTimer = null;
   let warning = null; // { el, tick, done } while the heads-up banner is showing
 
   const log = (...a) => console.log("%c[Procrastinator]", "color:#f0f", ...a);
@@ -103,40 +101,6 @@
     const t = el("div", { className: "proc-toast", textContent: text });
     document.documentElement.append(t);
     setTimeout(() => t.remove(), ms);
-  }
-
-  // Celebrate the same playful counter shown in the popup, at each 5-minute boundary.
-  function clearCelebration() {
-    clearTimeout(celebrationTimer);
-    celebrationTimer = null;
-    celebration?.remove();
-    celebration = null;
-  }
-
-  function celebrateMilestone(minutes) {
-    clearCelebration();
-    const host = el("div", { className: "proc-celebration" });
-    const message = el("div", {
-      className: "proc-milestone",
-      textContent: `You've avoided work for ${minutes} minutes!`
-    });
-    message.setAttribute("role", "status");
-    host.append(message);
-    if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      const colors = ["#c7ff6b", "#c3a7fa", "#ff85b7", "#ffffff", "#ffd56b"];
-      for (let i = 0; i < 40; i++) {
-        const piece = el("span", { className: "proc-confetti" });
-        piece.style.setProperty("--proc-x", `${Math.random() * 100}vw`);
-        piece.style.setProperty("--proc-drift", `${Math.random() * 160 - 80}px`);
-        piece.style.setProperty("--proc-delay", `${Math.random() * .5}s`);
-        piece.style.backgroundColor = colors[i % colors.length];
-        piece.setAttribute("aria-hidden", "true");
-        host.append(piece);
-      }
-    }
-    document.documentElement.append(host);
-    celebration = host;
-    celebrationTimer = setTimeout(clearCelebration, 4200);
   }
 
   // ------------------------------------------------------- module mounting
@@ -464,19 +428,12 @@
         } else {
           clearTimeout(timer);
           timer = null;
-          clearCelebration();
           cancelWarning();
           closeOverlay({ counted: false });
           closeCorner();
         }
       }
-      if (enabled && !document.hidden && changes.minutesPrevented) {
-        const before = Math.max(0, Number(changes.minutesPrevented.oldValue) || 0);
-        const after = Math.max(0, Number(changes.minutesPrevented.newValue) || 0);
-        if (Number.isFinite(after) && Math.floor(after / 5) > Math.floor(before / 5)) {
-          celebrateMilestone(Math.floor(after / 5) * 5);
-        }
-      }
+
     });
   }
 
